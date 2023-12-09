@@ -6,6 +6,9 @@ from TicTacToe.timer import Timer
 from PIL import Image, ImageTk
 from TicTacToe.CTkGif import CTkGif
 import os
+from TicTacToe.ai import AI
+import threading
+import time
 class TicTacToeGame:
     def __init__(self, root):
         self.game_active = True
@@ -19,15 +22,16 @@ class TicTacToeGame:
     def set_variables(self):
         self.root.title("Tic-Tac-Toe")
         self.root.geometry("600x600")
-        self.root.iconbitmap(r'D:\Tkinter projects\TicTacToe\img\icon.ico')
+        self.root.iconbitmap(os.path.abspath("img\icon_ttc.ico"))
         self.x_countn = 0
         self.c_countn = 0
         self.blocks_click = [[False, ""] for _ in range(9)]
         self.round = 0
-        self.turn = "x"
+        self.turn = "c"
         self.blocks = []
         self.stop_start = timedelta(seconds=0)
-        self.IMAGE_PATH = r'D:\Tkinter projects\TicTacToe\img\tengif.gif'
+        self.IMAGE_PATH = os.path.abspath("img\chatgpt_logo.gif")
+        self.ai_mode = False
 
     #Setting up interface
     def setup_ui(self):
@@ -70,7 +74,7 @@ class TicTacToeGame:
             self.reset_game()
             return
         self.round = 0
-        self.turn = "x"
+        self.turn = "c"
         self.blocks_click = [[False, ""] for _ in range(9)]
         for block in self.blocks:
             block.configure(text="✎", state="normal")
@@ -90,9 +94,32 @@ class TicTacToeGame:
             self.x_count.configure(text=f"{self.x_countn}  ❌")
 
     def ai_modebtn(self):
+        if self.ai_mode:
+            self.ai_mode_off()
         self.label_ai.place(relx = 0.05, rely = 0.95, anchor="center", relwidth=0.2, relheight=0.2)
         self.label_ai.start()
-        
+        self.reset_timerbtn()
+        self.reset_scorebtn()
+        self.new_gamebtn()
+        self.ai_mode_start()
+
+    def ai_mode_start(self):
+        self.ai = AI()
+        self.ai_mode = True
+
+    def ai_turn(self):
+        if not self.game_active:
+            return
+        time.sleep(10)
+        click_index = self.ai.process_response(side="x", positions=self.blocks_click, hard_level = 1)
+        self.blocks_click[click_index-1] = [True, "x"]
+        self.blocks[click_index-1].configure(text="❌", state="disabled")
+        self.turn = 'c'
+        self.round += 1
+        self.check_win(True)
+ 
+    def ai_mode_off(self):
+        pass
 
     #Definning and placing blocks
     def create_squares(self):
@@ -176,7 +203,7 @@ class TicTacToeGame:
         self.check_win()
 
     #Checking if someone win
-    def check_win(self):
+    def check_win(self, after_ai = False):
         # Check rows
         for i in range(0, 9, 3):
             if self.blocks_click[0 + i][1] == "x" and self.blocks_click[1 + i][1] == "x" and self.blocks_click[2 + i][1] == "x":
@@ -202,6 +229,10 @@ class TicTacToeGame:
 
         if self.blocks_click[2][1] == "c" and self.blocks_click[4][1] == "c" and self.blocks_click[6][1] == "c":
             self.if_win("c")
+
+        if self.ai_mode and self.turn == "x" and not after_ai:
+            ai = threading.Thread(target=self.ai_turn)
+            ai.start()
 
     #Reseting game
     def reset_game(self):
