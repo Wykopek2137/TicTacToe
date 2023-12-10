@@ -9,6 +9,7 @@ import os
 from TicTacToe.ai import AI
 import threading
 import time
+import playsound
 class TicTacToeGame:
     def __init__(self, root):
         self.game_active = True
@@ -21,7 +22,8 @@ class TicTacToeGame:
     #Setting variables
     def set_variables(self):
         self.root.title("Tic-Tac-Toe")
-        self.root.geometry("600x600")
+        self.root.geometry("650x650")
+        self.root.minsize(650, 650)
         self.root.iconbitmap(os.path.abspath("img\icon_ttc.ico"))
         self.x_countn = 0
         self.c_countn = 0
@@ -30,9 +32,10 @@ class TicTacToeGame:
         self.turn = "c"
         self.blocks = []
         self.stop_start = timedelta(seconds=0)
-        self.IMAGE_PATH = os.path.abspath("img\chatgpt_logo.gif")
+        self.IMAGE_PATH = os.path.abspath(r"img/chatgpt_logo.gif")
+        self.AUDIO_PATH = os.path.abspath(r"audio/barka.mp3")
         self.ai_mode = False
-
+        self.ai = AI()
     #Setting up interface
     def setup_ui(self):
         self.create_title_menu()
@@ -59,10 +62,13 @@ class TicTacToeGame:
         self.customdrop1 = CustomDropdownMenu(widget=button1)
         self.customdrop1.add_option("New", self.new_gamebtn)
         self.customdrop1.add_option("Exit", self.exit_gamebtn)
-        self.customdrop1.add_option("2137")
+        self.customdrop1.add_option("2137", self.barka_btn)
         self.customdrop2 = CustomDropdownMenu(widget=button2)
         self.customdrop2.add_option("Custom")
-        self.customdrop2.add_option("AI", self.ai_modebtn)
+        #self.customdrop2.add_option("AI", self.ai_modebtn)
+        self.submenu = self.customdrop2.add_submenu("AI")
+        self.submenu.add_option("Key", self.button_click_event)
+        self.submenu.add_option("On/Off", self.ai_modebtn)
         self.customdrop3 = CustomDropdownMenu(widget=button3)
         self.customdrop3.add_option("Author")
         self.customdrop4 = CustomDropdownMenu(widget=button4)
@@ -78,6 +84,10 @@ class TicTacToeGame:
         self.blocks_click = [[False, ""] for _ in range(9)]
         for block in self.blocks:
             block.configure(text="✎", state="normal")
+
+    def barka_btn(self):
+        barka = threading.Thread(target=lambda: playsound.playsound(self.AUDIO_PATH))
+        barka.start()
 
     #Exit game
     def exit_gamebtn(self):
@@ -96,6 +106,7 @@ class TicTacToeGame:
     def ai_modebtn(self):
         if self.ai_mode:
             self.ai_mode_off()
+            return
         self.label_ai.place(relx = 0.05, rely = 0.95, anchor="center", relwidth=0.2, relheight=0.2)
         self.label_ai.start()
         self.reset_timerbtn()
@@ -103,8 +114,12 @@ class TicTacToeGame:
         self.new_gamebtn()
         self.ai_mode_start()
 
+    def button_click_event(self):
+        dialog = ctk.CTkInputDialog(text="Type your chatgpt api key: ", title="API KEY")
+        self.path = dialog.get_input()
+        self.ai.api_key = self.path
+
     def ai_mode_start(self):
-        self.ai = AI()
         self.ai_mode = True
 
     def ai_turn(self):
@@ -119,7 +134,12 @@ class TicTacToeGame:
         self.check_win(True)
  
     def ai_mode_off(self):
-        pass
+        self.label_ai.stop()
+        self.label_ai.place_forget()
+        self.ai_mode = False
+        self.reset_timerbtn()
+        self.reset_scorebtn()
+        self.new_gamebtn()
 
     #Definning and placing blocks
     def create_squares(self):
@@ -152,6 +172,8 @@ class TicTacToeGame:
     def on_hover(self, event, el, id):
         if not self.game_active:
             return
+        elif self.turn == 'x' and self.ai_mode:
+            return
         if self.blocks_click[id][0]:
             pass
         elif self.turn == "x":
@@ -177,7 +199,6 @@ class TicTacToeGame:
         self.c_count.configure(text=f"⚪  {self.c_countn}")
         self.x_count.configure(text=f"{self.x_countn}  ❌")
 
-        # Plan another in 1 sec
         if self.game_active:
             self.root.after(1000, self.update_time)
         else:
@@ -186,6 +207,8 @@ class TicTacToeGame:
     #Setting up on click function
     def on_click(self, event, el, id):
         if not self.game_active:
+            return
+        elif self.turn == 'x' and self.ai_mode:
             return
         self.round += 1
         self.blocks_click[id][1] = self.turn
@@ -238,7 +261,7 @@ class TicTacToeGame:
     def reset_game(self):
         self.timer.start_timer()
         self.round = 0
-        self.turn = "x"
+        self.turn = "c"
         self.blocks_click = [[False, ""] for _ in range(9)]
         for block in self.blocks:
             block.configure(text="✎", state="normal")

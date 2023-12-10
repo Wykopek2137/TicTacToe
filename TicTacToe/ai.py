@@ -2,7 +2,7 @@ from openai import OpenAI
 from random import randint
 
 class AI(OpenAI):
-    def __init__(self, api_key="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"):
+    def __init__(self, api_key=""):
         super().__init__(api_key=api_key)
     def process_response(self, **kwargs) -> int:
         
