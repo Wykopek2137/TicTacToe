@@ -13,6 +13,10 @@ class Timer():
     def reset(self):
         self.start = datetime.datetime.now()
         self.stop_delta = datetime.timedelta() 
+    def get_time(self):
+        elapsed_time = self.get_seconds()
+        minutes, seconds = divmod(elapsed_time.seconds, 60)
+        return f"{minutes:02}:{seconds:02}"
 
 
 

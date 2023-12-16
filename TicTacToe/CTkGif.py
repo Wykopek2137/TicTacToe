@@ -1,7 +1,6 @@
 from PIL import Image
 import customtkinter as ctk
 
-
 class CTkGif(ctk.CTkLabel):
     """ Wyświetlanie pliku GIF """
 
